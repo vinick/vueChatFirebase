@@ -37,7 +37,7 @@
 					font-size: 16px;
 					transition: 0.4s;
 				}
-				input[type="text"] {
+				input[type="text"], input[type="password"] {
 					appearance: none;
 					border: none;
 					outline: none;
@@ -76,7 +76,7 @@
 					label {
 						color: #ea526f;
 					}
-					input[type="text"] {
+					input[type="text"], input[type="password"] {
 						background-color: #FFF;
 						box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 						&::placeholder {
@@ -164,7 +164,7 @@
 			box-shadow: 0px 0px 12px rgba(100, 100, 100, 0.2);
 			form {
 				display: flex;
-				input[type="text"] {
+				input[type="text"], input[type="password"] {
 					flex: 1 1 100%;
 					appearance: none;
 					border: none;
@@ -202,4 +202,17 @@
 			}
 		}
 	}
+}
+
+.logout {
+	appearance: none;
+	border: none;
+	outline: none;
+	background: none;
+	text-decoration: underline;
+	
+	color: #ea526f;
+	font-size: 18px;
+	margin-bottom: 10px;
+	text-align: right;
 }

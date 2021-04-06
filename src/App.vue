@@ -1,16 +1,37 @@
 <template>
-  <div class="view login" v-if="state.username === '' || state.username === null">
+  <div class="view login" v-if="loginState === 'login'">
     <form class="login-form" @submit.prevent="Login">
       <div class="form-inner">
         <h1>Login to FireChat</h1>
         <label for="username">Username</label>
-        <input type="text" v-model="inputUserName" placeholder="Please enter your username..." />
-        <input type="submit" value="login" />
+        <input type="text" v-model="inputUserName" placeholder="Username" />
+        <label for="password">Password</label>
+        <input type="password" v-model="inputPassword" placeholder="Password" />
+        <div class="d-flex justify-content-end">
+          <button type="button" class="logout" @click="GoToPage('register')">Need an account?</button>
+        </div>
+        <input type="submit" value="login" @submit.prevent="Login"/>
       </div>
     </form>
   </div>
 
-  <div class="view chat" v-else>
+  <div class="view login" v-else-if="loginState === 'register'">
+    <form class="login-form" @submit.prevent="Register">
+      <div class="form-inner">
+        <h1>Register to FireChat</h1>
+        <label for="username">Username</label>
+        <input type="text" v-model="inputUserName" placeholder="Username" />
+        <label for="password">Password</label>
+        <input type="password" v-model="inputPassword" placeholder="Password" />
+        <div class="d-flex justify-content-end">
+          <button type="button" class="logout" @click="GoToPage('login')">Have an account?</button>
+        </div>
+        <input type="submit" value="register" @submit.prevent="Register"/>
+      </div>
+    </form>
+  </div>
+
+  <div class="view chat" v-else-if="loginState === 'logged'">
     <header>
       <button class="logout" @click="Logout">Logout</button>
       <h1>Welcome, {{ state.username }}</h1>
@@ -38,25 +59,59 @@
 <script>
 import { reactive, onMounted, ref } from 'vue';
 import db from './db'
+import firebase from 'firebase';
 
 export default {
   setup () {
     const inputUserName = ref("");
+    const inputPassword = ref("");
     const inputMessage = ref("");
     const state = reactive({
       username: "",
       messages: []
     });
+    const loginState = ref("login");
 
     const Login = () => {
-      if (inputUserName.value != "" || inputUserName.value != null) {
-        state.username = inputUserName.value;
-        inputUserName.value = "";
-      }
+      
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(inputUserName.value, inputPassword.value)
+        .then(data => {
+          loginState.value = 'logged';
+          state.username = inputUserName.value;
+          inputUserName.value = "";
+          inputPassword.value = "";
+          console.log(data)
+        })
+        .catch(err => alert(err.message));
     }
 
     const Logout = () => {
       state.username = "";
+      firebase
+        .auth()
+        .signOut()
+        .then(() => console.log("Signed out"))
+        .catch(err => alert(err.message));
+    }
+
+    const GoToPage = (page) => {
+      loginState.value = page;
+      inputUserName.value = "";
+      inputPassword.value = "";
+    }
+
+    const Register = () => {
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(inputUserName.value, inputPassword.value)
+        .then(() => {
+          loginState.value = 'login';
+          inputUserName.value = "";
+          inputPassword.value = "";
+        })
+        .catch(err => alert(err.message));
     }
 
     const SendMessage = () => {
@@ -76,6 +131,12 @@ export default {
     }
 
     onMounted(() => {
+      firebase.auth().onAuthStateChanged((user) => {
+        if(!user) {
+          loginState.value = 'login'
+        }
+      });
+
       const messagesRef = db.database().ref("messages");
 
       messagesRef.on('value', snapshot => {
@@ -97,9 +158,13 @@ export default {
     return {
       inputUserName,
       inputMessage,
+      inputPassword,
       state,
+      loginState,
       Login,
       Logout,
+      Register,
+      GoToPage,
       SendMessage
     }
   }
